@@ -7,6 +7,7 @@
   <p>
     <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="NodeJS" />
     <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white" alt="Axios" />
+    <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg?style=for-the-badge" alt="GPLv3 License" />
     <img src="https://img.shields.io/badge/Security-Locked-red?style=for-the-badge" alt="Security Focused" />
   </p>
 </div>
@@ -80,6 +81,11 @@ BUZZHEAVIER_PARENT_ID=your_folder_id</code></pre>
 <h2>▶️ Usage</h2>
 <pre><code>npm start</code></pre>
 <p>The bot will poll the communities every 90 seconds (configurable via <code>POLL_INTERVAL_MS</code>).</p>
+
+<h2>⚖️ License</h2>
+<p>
+  <strong>scored.co.bot</strong> is licensed under the <strong>GNU General Public License v3.0</strong>. See the <code>LICENSE</code> file in the repository for the full text.
+</p>
 
 <h2>⚠️ Disclaimer</h2>
 <p>
