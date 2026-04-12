@@ -28,6 +28,7 @@ const ALLOWED_DOWNLOAD_HOSTS = new Set([
     'catbox.moe',
     'files.catbox.moe',
     'videy.co',
+    'cdn.videy.co',
     '0.vern.cc',
     'pomf2.lain.la',
     'buzzheavier.com',
@@ -219,6 +220,7 @@ async function uploadToCatbox(filePath) {
 
         const form = new FormData();
         form.append('reqtype', 'fileupload');
+        form.append('userhash', process.env.CATBOX_USERHASH);
         form.append('fileToUpload', fs.createReadStream(filePath));
 
         const res = await axios.post(process.env.CATBOX_API, form, {
