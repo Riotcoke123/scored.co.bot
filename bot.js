@@ -23,6 +23,7 @@ const MAX_BACKUPS       = 10_000;                        // Fix #8: cap backup l
 // Fix #1 & #7: SSRF + HTTPS enforcement — only these exact hostnames may be downloaded
 const ALLOWED_DOWNLOAD_HOSTS = new Set([
     'fileditch.com',
+    'new.fileditch.com',
     'qu.ax',
     'pixeldrain.com',
     'catbox.moe',
@@ -331,6 +332,32 @@ async function uploadToPixeldrain(filePath) {
     });
 }
 
+async function uploadToFileditch(filePath) {
+    return withRetry('fileditch', async () => {
+        const fileName = path.basename(filePath);
+        const fileData = fs.createReadStream(filePath);
+        const fileSize = fs.statSync(filePath).size;
+        const res = await axios.put(
+            `${process.env.FILEDITCH_API}?filename=${encodeURIComponent(fileName)}`,
+            fileData,
+            {
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Length': fileSize,
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                timeout: 600000
+            }
+        );
+        // Response is JSON: { files: [{ url: "https://..." }] } or { url: "..." }
+        const link = res.data?.files?.[0]?.url ?? res.data?.url ?? null;
+        if (!link) throw new Error(`unexpected fileditch response: ${JSON.stringify(res.data)}`);
+        console.log(`  [fileditch] ${link}`);
+        return link;
+    });
+}
+
 async function upvotePost(postId) {
     const params = new URLSearchParams();
     params.append('id', String(postId));
@@ -410,17 +437,19 @@ async function processPost(post, community) {
     const tempPath = path.join(__dirname, `temp_${postId}_${Date.now()}.mp4`);
 
     try {
-        let catboxLink = null, quaxLink = null, gofileLink = null, filebinLink = null, pixeldrainLink = null, buzzheavierLink = null;
-        let vernLink = null, pomf2Link = null, videyLink = null;
+        let catboxLink = null, quaxLink = null, pixeldrainLink = null, buzzheavierLink = null;
+        let vernLink = null, pomf2Link = null, videyLink = null, fileditchLink = null;
 
-        // Check source to avoid redundant uploads
-        if (safeVideoLink.includes('catbox.moe'))       catboxLink      = safeVideoLink;
-        else if (safeVideoLink.includes('qu.ax'))        quaxLink        = safeVideoLink;
-        else if (safeVideoLink.includes('videy.co'))     videyLink       = safeVideoLink;
-        else if (safeVideoLink.includes('0.vern.cc'))    vernLink        = safeVideoLink;
-        else if (safeVideoLink.includes('pomf2.lain.la'))pomf2Link       = safeVideoLink;
-        else if (safeVideoLink.includes('pixeldrain.com'))pixeldrainLink = safeVideoLink;
+        // Check source to avoid redundant uploads.
+        // new.fileditch.com: save original URL for the comment, still download & mirror elsewhere.
+        if (safeVideoLink.includes('catbox.moe'))        catboxLink      = safeVideoLink;
+        else if (safeVideoLink.includes('qu.ax'))         quaxLink        = safeVideoLink;
+        else if (safeVideoLink.includes('videy.co'))      videyLink       = safeVideoLink;
+        else if (safeVideoLink.includes('0.vern.cc'))     vernLink        = safeVideoLink;
+        else if (safeVideoLink.includes('pomf2.lain.la')) pomf2Link       = safeVideoLink;
+        else if (safeVideoLink.includes('pixeldrain.com'))pixeldrainLink  = safeVideoLink;
         else if (safeVideoLink.includes('buzzheavier.com'))buzzheavierLink = safeVideoLink;
+        else if (safeVideoLink.includes('new.fileditch.com')) fileditchLink = safeVideoLink;
 
         let downloadUrl = safeVideoLink;
 
@@ -435,31 +464,28 @@ async function processPost(post, community) {
         console.log(`  Uploading mirrors...`);
         const uploads = await Promise.all([
             quaxLink        ? null : uploadToMirror('qu.ax', process.env.QUAX_API, tempPath),
-            uploadToGoFile(tempPath),
-            uploadToFilebin(tempPath, postId),
             catboxLink      ? null : uploadToCatbox(tempPath),
             pixeldrainLink  ? null : uploadToPixeldrain(tempPath),
-            buzzheavierLink ? null : uploadToBuzzheavier(tempPath)
+            buzzheavierLink ? null : uploadToBuzzheavier(tempPath),
+            fileditchLink   ? null : uploadToFileditch(tempPath),
         ]);
 
         if (!quaxLink)        quaxLink        = uploads[0];
-        gofileLink                            = uploads[1];
-        filebinLink                           = uploads[2];
-        if (!catboxLink)      catboxLink      = uploads[3];
-        if (!pixeldrainLink)  pixeldrainLink  = uploads[4];
-        if (!buzzheavierLink) buzzheavierLink = uploads[5];
+        if (!catboxLink)      catboxLink      = uploads[1];
+        if (!pixeldrainLink)  pixeldrainLink  = uploads[2];
+        if (!buzzheavierLink) buzzheavierLink = uploads[3];
+        if (!fileditchLink)   fileditchLink   = uploads[4];
 
         // Fix #5: sanitize all URLs before embedding them in comment text
         const mirrorLines = [
-            catboxLink      ? `Catbox: ${sanitizeUrl(catboxLink)}`           : null,
-            quaxLink        ? `Qu.ax: ${sanitizeUrl(quaxLink)}`              : null,
-            gofileLink      ? `GoFile: ${sanitizeUrl(gofileLink)}`           : null,
-            filebinLink     ? `Filebin: ${sanitizeUrl(filebinLink)}`         : null,
-            pixeldrainLink  ? `Pixeldrain: ${sanitizeUrl(pixeldrainLink)}`   : null,
-            buzzheavierLink ? `BuzzHeavier: ${sanitizeUrl(buzzheavierLink)}` : null,
-            vernLink        ? `Vern: ${sanitizeUrl(vernLink)}`               : null,
-            pomf2Link       ? `Pomf2: ${sanitizeUrl(pomf2Link)}`             : null,
-            videyLink       ? `Videy: ${sanitizeUrl(videyLink)}`             : null,
+            fileditchLink   ? `FileDitch: ${sanitizeUrl(fileditchLink)}`       : null,
+            catboxLink      ? `Catbox: ${sanitizeUrl(catboxLink)}`             : null,
+            quaxLink        ? `Qu.ax: ${sanitizeUrl(quaxLink)}`                : null,
+            pixeldrainLink  ? `Pixeldrain: ${sanitizeUrl(pixeldrainLink)}`     : null,
+            buzzheavierLink ? `BuzzHeavier: ${sanitizeUrl(buzzheavierLink)}`   : null,
+            vernLink        ? `Vern: ${sanitizeUrl(vernLink)}`                 : null,
+            pomf2Link       ? `Pomf2: ${sanitizeUrl(pomf2Link)}`               : null,
+            videyLink       ? `Videy: ${sanitizeUrl(videyLink)}`               : null,
         ].filter(Boolean).join('\n');
 
         if (mirrorLines) {
@@ -473,8 +499,8 @@ async function processPost(post, community) {
             scored_post_id: postId,
             title, author,
             original_link: safeVideoLink,
-            catbox: catboxLink, quax: quaxLink, gofile: gofileLink,
-            filebin: filebinLink, pixeldrain: pixeldrainLink, buzzheavier: buzzheavierLink
+            fileditch: fileditchLink, catbox: catboxLink, quax: quaxLink,
+            pixeldrain: pixeldrainLink, buzzheavier: buzzheavierLink
         });
         if (backups.length > MAX_BACKUPS) backups.splice(0, backups.length - MAX_BACKUPS);
         saveJSONAtomic(BACKUP_FILE, backups);   // Fix #6: atomic write
