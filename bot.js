@@ -23,15 +23,12 @@ const MAX_BACKUPS       = 10_000;                        // Fix #8: cap backup l
 // Fix #1 & #7: SSRF + HTTPS enforcement — only these exact hostnames may be downloaded
 const ALLOWED_DOWNLOAD_HOSTS = new Set([
     'fileditch.com',
-    'new.fileditch.com',
     'qu.ax',
     'pixeldrain.com',
     'catbox.moe',
     'files.catbox.moe',
     'videy.co',
     'cdn.videy.co',
-    '0.vern.cc',
-    'pomf2.lain.la',
     'buzzheavier.com',
     'w.buzzheavier.com',
 ]);
@@ -102,14 +99,14 @@ function saveJSONAtomic(file, data) {
 }
 
 function getVideoLink(post) {
-    const fileditchLink = (post.link && post.link.includes('fileditch.com') && post.link.endsWith('.mp4')) ? post.link : null;
+    const fileditchLink = (post.link && post.link.includes('fileditch.com') && !post.link.includes('new.fileditch.com') && post.link.endsWith('.mp4')) ? post.link : null;
     const quaxLink      = (post.link && post.link.includes('qu.ax') && post.link.endsWith('.mp4')) ? post.link : null;
     const pdLink        = (post.link && post.link.includes('pixeldrain.com')) ? post.link : null;
 
     const videoFieldLink = post.video_link ?? post.video_url ?? post.media_url ?? post.embed_url ?? null;
 
     if (videoFieldLink) {
-        if (videoFieldLink.includes('fileditch.com') && videoFieldLink.endsWith('.mp4')) return videoFieldLink;
+        if (videoFieldLink.includes('fileditch.com') && !videoFieldLink.includes('new.fileditch.com') && videoFieldLink.endsWith('.mp4')) return videoFieldLink;
         if (videoFieldLink.includes('qu.ax')         && videoFieldLink.endsWith('.mp4')) return videoFieldLink;
         if (videoFieldLink.includes('pixeldrain.com')) return videoFieldLink;
     }
@@ -438,18 +435,15 @@ async function processPost(post, community) {
 
     try {
         let catboxLink = null, quaxLink = null, pixeldrainLink = null, buzzheavierLink = null;
-        let vernLink = null, pomf2Link = null, videyLink = null, fileditchLink = null;
+        let videyLink = null, fileditchLink = null;
 
         // Check source to avoid redundant uploads.
-        // new.fileditch.com: save original URL for the comment, still download & mirror elsewhere.
-        if (safeVideoLink.includes('catbox.moe'))        catboxLink      = safeVideoLink;
-        else if (safeVideoLink.includes('qu.ax'))         quaxLink        = safeVideoLink;
-        else if (safeVideoLink.includes('videy.co'))      videyLink       = safeVideoLink;
-        else if (safeVideoLink.includes('0.vern.cc'))     vernLink        = safeVideoLink;
-        else if (safeVideoLink.includes('pomf2.lain.la')) pomf2Link       = safeVideoLink;
-        else if (safeVideoLink.includes('pixeldrain.com'))pixeldrainLink  = safeVideoLink;
-        else if (safeVideoLink.includes('buzzheavier.com'))buzzheavierLink = safeVideoLink;
-        else if (safeVideoLink.includes('new.fileditch.com')) fileditchLink = safeVideoLink;
+        // new.fileditch.com and fileditchfiles.me are mirror-only; not used as download sources.
+        if (safeVideoLink.includes('catbox.moe'))         catboxLink       = safeVideoLink;
+        else if (safeVideoLink.includes('qu.ax'))          quaxLink         = safeVideoLink;
+        else if (safeVideoLink.includes('videy.co'))       videyLink        = safeVideoLink;
+        else if (safeVideoLink.includes('pixeldrain.com')) pixeldrainLink   = safeVideoLink;
+        else if (safeVideoLink.includes('buzzheavier.com'))buzzheavierLink  = safeVideoLink;
 
         let downloadUrl = safeVideoLink;
 
@@ -483,8 +477,6 @@ async function processPost(post, community) {
             quaxLink        ? `Qu.ax: ${sanitizeUrl(quaxLink)}`                : null,
             pixeldrainLink  ? `Pixeldrain: ${sanitizeUrl(pixeldrainLink)}`     : null,
             buzzheavierLink ? `BuzzHeavier: ${sanitizeUrl(buzzheavierLink)}`   : null,
-            vernLink        ? `Vern: ${sanitizeUrl(vernLink)}`                 : null,
-            pomf2Link       ? `Pomf2: ${sanitizeUrl(pomf2Link)}`               : null,
             videyLink       ? `Videy: ${sanitizeUrl(videyLink)}`               : null,
         ].filter(Boolean).join('\n');
 
