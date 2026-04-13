@@ -16,31 +16,55 @@
 
 <h2>📖 Overview</h2>
 <p>
-  This bot monitors specified communities on <strong><a href="https://scored.co/">Scored.co</a></strong> for new video posts. When a video is detected from a supported host, the bot downloads it, generates multiple backup mirrors, upvotes the post, and leaves a comment with the mirror links.
+  This bot monitors specified communities on <strong><a href="https://scored.co/">Scored.co</a></strong> (specifically <code>c/spictank</code> and <code>c/theNETWORK</code>) for new video posts. When a video is detected, the bot validates the source, downloads it (up to 2GB), and generates high-speed backup mirrors to ensure content persistence.
 </p>
 
-<h2>🔗 Quick Links</h2>
+<h2>🚀 Core Features</h2>
 <ul>
-  <li><strong>Platform:</strong> <a href="https://scored.co/">Scored.co</a></li>
-  <li><strong>API Documentation:</strong> <a href="https://docs.scored.co/">Official Scored API Docs</a></li>
+  <li><strong>Multi-Mirror Redundancy:</strong> Native API integration for Catbox, Qu.ax, Pixeldrain, Buzzheavier, and Fileditch.</li>
+  <li><strong>Security First:</strong> Strict SSRF protection with hostname allow-listing and mandatory HTTPS enforcement.</li>
+  <li><strong>Fail-Safe State:</strong> Uses atomic file writing to prevent data corruption during unexpected shutdowns.</li>
+  <li><strong>Auto-Engagement:</strong> Automatically upvotes processed posts and leaves a formatted comment with all available mirrors.</li>
+  <li><strong>Resource Efficient:</strong> Stream-based processing handles large files (up to 2GB) without exhausting system memory.</li>
 </ul>
 
-<h2>🚀 Features</h2>
-<ul>
-  <li><strong>Multi-Mirror Support:</strong> Automatically uploads to Catbox, Qu.ax, GoFile, Filebin, Pixeldrain, and Buzzheavier.</li>
-  <li><strong>Automated Engagement:</strong> Upvotes processed posts and comments with backup links.</li>
-  <li><strong>Persistence:</strong> Uses atomic JSON writes to track processed posts and maintain a backup log.</li>
-</ul>
-
-<h2>🛠️ Installation</h2>
-<pre><code># Clone and install
+<h2>🛠️ Installation & Setup</h2>
+<pre><code># Clone the repository
 git clone https://github.com/Riotcoke123/scored.co.bot.git
 cd scored.co.bot
+
+# Install dependencies
 npm install</code></pre>
 
-<h2>📜 Update Log (4/12/26)</h2>
-<p>Major stability and security overhaul completed. The following improvements have been implemented:</p>
+<h3>Configuration</h3>
+<p>Create a <code>.env</code> file in the root directory and populate it with your Scored and Mirror API credentials:</p>
+<pre><code>USER_AGENT=YourUserAgent
+SCORED_API_KEY=your_key
+SCORED_API_SECRET=your_secret
+SCORED_XSRF_TOKEN=your_token
 
+# Mirror Credentials
+PIXELDRAIN_API_KEY=your_key
+BUZZHEAVIER_API_KEY=your_key
+BUZZHEAVIER_PARENT_ID=your_id
+CATBOX_USERHASH=your_hash
+QUAX_API=https://qu.ax/upload.php
+FILEDITCH_API=https://new.fileditch.com/upload.php</code></pre>
+
+<h2>📦 Supported Sources</h2>
+<p>The bot currently validates and downloads content from the following trusted hosts:</p>
+<ul>
+  <li>Fileditch (new.fileditch.com)</li>
+  <li>Qu.ax</li>
+  <li>Pixeldrain.com</li>
+  <li>Catbox.moe</li>
+  <li>Videy.co</li>
+  <li>0.vern.cc</li>
+  <li>Pomf2.lain.la</li>
+  <li>Buzzheavier.com</li>
+</ul>
+
+<h2>📜 Recent Updates (April 2026)</h2>
 <table>
   <thead>
     <tr>
@@ -51,33 +75,29 @@ npm install</code></pre>
   <tbody>
     <tr>
       <td><strong>Security</strong></td>
-      <td>Implemented SSRF protection with a strict hostname allow-list and mandatory HTTPS enforcement. Log scrubbing now strips sensitive credential headers from error reports.</td>
+      <td>Implemented <code>validateDownloadUrl</code> to prevent SSRF. Added log scrubbing to remove sensitive headers from error reports.</td>
+    </tr>
+    <tr>
+      <td><strong>Data Integrity</strong></td>
+      <td>Introduced <code>saveJSONAtomic</code>—state files are now written to temporary files before being renamed to prevent partial writes.</td>
+    </tr>
+    <tr>
+      <td><strong>Performance</strong></td>
+      <td>Transitioned to stream-based uploads for Filebin and Buzzheavier to support files up to 2GB without OOM errors.</td>
     </tr>
     <tr>
       <td><strong>Stability</strong></td>
-      <td>Added a 2GB hard limit on downloads with mid-stream termination. Integrated atomic file writing to prevent <code>backups.json</code> and <code>processed.json</code> corruption.</td>
-    </tr>
-    <tr>
-      <td><strong>Optimization</strong></td>
-      <td>Switched to stream-based uploads for large files (Filebin/Buzzheavier) to prevent Out-of-Memory (OOM) crashes. Added MIME-type validation to reject non-video files.</td>
-    </tr>
-    <tr>
-      <td><strong>Maintenance</strong></td>
-      <td>Implemented a 10,000-entry cap on history logs to manage disk space. Added strict state validation—the bot will now halt if core database files are corrupted.</td>
-    </tr>
-    <tr>
-      <td><strong>Mirrors</strong></td>
-      <td>New native support for <strong>Pixeldrain</strong> and <strong>Buzzheavier</strong> API integrations.</td>
+      <td>Added strict MIME-type validation and a hard 2GB mid-stream termination limit for downloads.</td>
     </tr>
   </tbody>
 </table>
 
 <h2>⚖️ License</h2>
 <p>
-  <strong>scored.co.bot</strong> is licensed under the <strong>GNU General Public License v3.0</strong>.
+  Licensed under the <strong>GNU General Public License v3.0</strong>.
 </p>
 
 <h2>⚠️ Disclaimer</h2>
 <p>
-  This bot is for archival purposes. Please ensure your use of this tool complies with the Terms of Service of Scored.co and the respective mirror providers.
+  This bot is intended for archival purposes. Users are responsible for ensuring compliance with the Terms of Service of Scored.co and the respective mirror providers.
 </p>
