@@ -16,16 +16,16 @@
 
 <h2>📖 Overview</h2>
 <p>
-  This bot monitors specified communities on <strong><a href="https://scored.co/">Scored.co</a></strong> (specifically <code>c/spictank</code> and <code>c/theNETWORK</code>) for new video posts. When a video is detected, the bot validates the source, downloads it (up to 2GB), and generates high-speed backup mirrors to ensure content persistence.
+  This bot monitors specified communities on <strong><a href="https://scored.co/">Scored.co</a></strong> (specifically <code>c/spictank</code> and <code>c/theNETWORK</code>) for new video posts[cite: 1]. When a video is detected, the bot validates the source, downloads it (up to 2GB), and generates high-speed backup mirrors to ensure content persistence[cite: 1].
 </p>
 
 <h2>🚀 Core Features</h2>
 <ul>
-  <li><strong>Multi-Mirror Redundancy:</strong> Native API integration for Catbox, Qu.ax, Pixeldrain, Buzzheavier, and Fileditch.</li>
-  <li><strong>Security First:</strong> Strict SSRF protection with hostname allow-listing and mandatory HTTPS enforcement.</li>
-  <li><strong>Fail-Safe State:</strong> Uses atomic file writing to prevent data corruption during unexpected shutdowns.</li>
-  <li><strong>Auto-Engagement:</strong> Automatically upvotes processed posts and leaves a formatted comment with all available mirrors.</li>
-  <li><strong>Resource Efficient:</strong> Stream-based processing handles large files (up to 2GB) without exhausting system memory.</li>
+  <li><strong>Multi-Mirror Redundancy:</strong> Native API integration for Catbox, Qu.ax, Pixeldrain, Buzzheavier, and Fileditch[cite: 1].</li>
+  <li><strong>Security First:</strong> Strict SSRF protection with hostname allow-listing and mandatory HTTPS enforcement[cite: 1].</li>
+  <li><strong>Fail-Safe State:</strong> Uses atomic file writing to prevent data corruption during unexpected shutdowns[cite: 1].</li>
+  <li><strong>Auto-Engagement:</strong> Automatically upvotes processed posts and leaves a formatted comment with all available mirrors[cite: 1].</li>
+  <li><strong>Resource Efficient:</strong> Stream-based processing handles large files (up to 2GB) without exhausting system memory[cite: 1].</li>
 </ul>
 
 <h2>🛠️ Installation & Setup</h2>
@@ -37,7 +37,7 @@ cd scored.co.bot
 npm install</code></pre>
 
 <h3>Configuration</h3>
-<p>Create a <code>.env</code> file in the root directory and populate it with your Scored and Mirror API credentials:</p>
+<p>Create a <code>.env</code> file in the root directory and populate it with your Scored and Mirror API credentials[cite: 1]:</p>
 <pre><code>USER_AGENT=YourUserAgent
 SCORED_API_KEY=your_key
 SCORED_API_SECRET=your_secret
@@ -54,14 +54,12 @@ FILEDITCH_API=https://new.fileditch.com/upload.php</code></pre>
 <h2>📦 Supported Sources</h2>
 <p>The bot currently validates and downloads content from the following trusted hosts:</p>
 <ul>
-  <li>Fileditch (new.fileditch.com)</li>
-  <li>Qu.ax</li>
-  <li>Pixeldrain.com</li>
-  <li>Catbox.moe</li>
-  <li>Videy.co</li>
-  <li>0.vern.cc</li>
-  <li>Pomf2.lain.la</li>
-  <li>Buzzheavier.com</li>
+  <li>Fileditch (new.fileditch.com) [cite: 1]</li>
+  <li>Qu.ax [cite: 1]</li>
+  <li>Pixeldrain.com [cite: 1]</li>
+  <li>Catbox.moe [cite: 1]</li>
+  <li>Videy.co [cite: 1]</li>
+  <li>Buzzheavier.com [cite: 1]</li>
 </ul>
 
 <h2>📜 Recent Updates (April 2026)</h2>
@@ -75,19 +73,19 @@ FILEDITCH_API=https://new.fileditch.com/upload.php</code></pre>
   <tbody>
     <tr>
       <td><strong>Security</strong></td>
-      <td>Implemented <code>validateDownloadUrl</code> to prevent SSRF. Added log scrubbing to remove sensitive headers from error reports.</td>
+      <td>Implemented <code>validateDownloadUrl</code> to prevent SSRF and added log scrubbing for sensitive headers[cite: 1].</td>
     </tr>
     <tr>
       <td><strong>Data Integrity</strong></td>
-      <td>Introduced <code>saveJSONAtomic</code>—state files are now written to temporary files before being renamed to prevent partial writes.</td>
+      <td>Introduced <code>saveJSONAtomic</code>—state files are written to temp files before renaming to prevent partial writes[cite: 1].</td>
     </tr>
     <tr>
       <td><strong>Performance</strong></td>
-      <td>Transitioned to stream-based uploads for Filebin and Buzzheavier to support files up to 2GB without OOM errors.</td>
+      <td>Transitioned to stream-based uploads for Filebin and Buzzheavier to support files up to 2GB[cite: 1].</td>
     </tr>
     <tr>
       <td><strong>Stability</strong></td>
-      <td>Added strict MIME-type validation and a hard 2GB mid-stream termination limit for downloads.</td>
+      <td>Added strict MIME-type validation and a hard 2GB mid-stream termination limit for downloads[cite: 1].</td>
     </tr>
   </tbody>
 </table>
