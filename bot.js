@@ -205,33 +205,6 @@ async function uploadToMirror(label, targetUrl, filePath) {
     });
 }
 
-async function uploadToCatbox(filePath) {
-    return withRetry('catbox', async () => {
-        const stats = fs.statSync(filePath);
-        const fileSizeMB = stats.size / (1024 * 1024);
-        const ext = path.extname(filePath).toLowerCase();
-
-        if (ext !== '.mp4' || fileSizeMB >= 200) {
-            console.log(`  [catbox] Skip: Format ${ext} or size ${fileSizeMB.toFixed(2)}MB exceeds 200MB limit.`);
-            return null;
-        }
-
-        const form = new FormData();
-        form.append('reqtype', 'fileupload');
-        form.append('userhash', process.env.CATBOX_USERHASH);
-        form.append('fileToUpload', fs.createReadStream(filePath));
-
-        const res = await axios.post(process.env.CATBOX_API, form, {
-            headers: form.getHeaders(),
-            timeout: 600000
-        });
-
-        const link = typeof res.data === 'string' && res.data.startsWith('http') ? res.data : null;
-        if (!link) throw new Error(`Catbox error: ${res.data}`);
-        console.log(`  [catbox] ${link}`);
-        return link;
-    });
-}
 
 async function uploadToGoFile(filePath) {
     return withRetry('gofile', async () => {
@@ -458,17 +431,15 @@ async function processPost(post, community) {
         console.log(`  Uploading mirrors...`);
         const uploads = await Promise.all([
             quaxLink        ? null : uploadToMirror('qu.ax', process.env.QUAX_API, tempPath),
-            catboxLink      ? null : uploadToCatbox(tempPath),
             pixeldrainLink  ? null : uploadToPixeldrain(tempPath),
             buzzheavierLink ? null : uploadToBuzzheavier(tempPath),
             fileditchLink   ? null : uploadToFileditch(tempPath),
         ]);
 
         if (!quaxLink)        quaxLink        = uploads[0];
-        if (!catboxLink)      catboxLink      = uploads[1];
-        if (!pixeldrainLink)  pixeldrainLink  = uploads[2];
-        if (!buzzheavierLink) buzzheavierLink = uploads[3];
-        if (!fileditchLink)   fileditchLink   = uploads[4];
+        if (!pixeldrainLink)  pixeldrainLink  = uploads[1];
+        if (!buzzheavierLink) buzzheavierLink = uploads[2];
+        if (!fileditchLink)   fileditchLink   = uploads[3];
 
         // Fix #5: sanitize all URLs before embedding them in comment text
         const mirrorLines = [
