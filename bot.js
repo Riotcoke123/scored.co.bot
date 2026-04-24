@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
 import 'dotenv/config';
+import { loadState, STATE_FILE } from './admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,6 @@ const ALLOWED_DOWNLOAD_HOSTS = new Set([
     'fileditch.com',
     'new.fileditch.com',
     'qu.ax',
-    'pixeldrain.com',
     'catbox.moe',
     'files.catbox.moe',
     'videy.co',
@@ -35,6 +35,20 @@ const ALLOWED_DOWNLOAD_HOSTS = new Set([
 ]);
 
 const SKIP_DOMAINS_RE = /youtube\.com|youtu\.be|kick\.com|x\.com|twitter\.com|sickchirpse\.com|instagram\.com|twitch\.tv|tiktok\.com|odysee\.com|bitchute\.com/;
+
+// ── Mirror state ─────────────────────────────────────────────────────────────
+
+/** Returns true if the named mirror is enabled in mirror-state.json */
+function mirrorEnabled(mirror) {
+    try {
+        const state = loadState();
+        return state[mirror] !== false;  // default to true if key missing
+    } catch {
+        return true; // safe fallback: don't suppress uploads on read error
+    }
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
 
 function validateDownloadUrl(rawUrl) {
     let parsed;
@@ -84,16 +98,14 @@ function saveJSONAtomic(file, data) {
 function getVideoLink(post) {
     const fileditchLink = (post.link && post.link.includes('fileditch.com') && !post.link.includes('new.fileditch.com') && post.link.endsWith('.mp4')) ? post.link : null;
     const quaxLink      = (post.link && post.link.includes('qu.ax') && post.link.endsWith('.mp4')) ? post.link : null;
-    const pdLink        = (post.link && post.link.includes('pixeldrain.com')) ? post.link : null;
 
     const videoFieldLink = post.video_link ?? post.video_url ?? post.media_url ?? post.embed_url ?? null;
 
     if (videoFieldLink) {
         if (videoFieldLink.includes('fileditch.com') && !videoFieldLink.includes('new.fileditch.com') && videoFieldLink.endsWith('.mp4')) return videoFieldLink;
         if (videoFieldLink.includes('qu.ax')         && videoFieldLink.endsWith('.mp4')) return videoFieldLink;
-        if (videoFieldLink.includes('pixeldrain.com')) return videoFieldLink;
     }
-    return videoFieldLink ?? fileditchLink ?? quaxLink ?? pdLink ?? null;
+    return videoFieldLink ?? fileditchLink ?? quaxLink ?? null;
 }
 
 function sanitizeUrl(url) {
@@ -147,7 +159,6 @@ const LOGO_PATH = path.join(__dirname, 'IPLOGO.jpeg');
 
 async function watermarkVideo(inputPath, outputPath) {
     return new Promise((resolve, reject) => {
-        // overlay=0:0 places the logo at top-left with no resizing applied to logo
         execFile('ffmpeg', [
             '-y',
             '-i', inputPath,
@@ -203,67 +214,61 @@ async function uploadToMirror(label, targetUrl, filePath) {
 }
 
 async function uploadToBuzzheavier(filePath) {
+    if (!mirrorEnabled('buzzheavier')) {
+        console.log('  [buzzheavier] Skipped — disabled by admin');
+        return null;
+    }
     return withRetry('buzzheavier', async () => {
         const fileName = path.basename(filePath);
-        const fileData = fs.createReadStream(filePath);
         const fileSize = fs.statSync(filePath).size;
+        // ReadStream must be created inside the retry lambda — a consumed stream
+        // cannot be re-read and will cause ECONNRESET on any subsequent attempt.
+        const fileData = fs.createReadStream(filePath);
         const res = await axios.put(
             `https://w.buzzheavier.com/${process.env.BUZZHEAVIER_PARENT_ID}/${encodeURIComponent(fileName)}`,
             fileData,
             {
                 headers: {
-                    'Authorization': `Bearer ${process.env.BUZZHEAVIER_API_KEY}`,
                     'Content-Type': 'application/octet-stream',
-                    'Content-Length': fileSize
+                    'Content-Length': fileSize,
+                    'Authorization': `Bearer ${process.env.BUZZHEAVIER_API_KEY}`,
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity,
                 timeout: 600000
             }
         );
-        const id = res.data?.data?.id;
-        if (!id) throw new Error(`unexpected buzzheavier response`);
+        // Response: { code: 201, data: { id: "...", ... } }
+        const id = res.data?.data?.id ?? null;
+        if (!id) throw new Error(`unexpected buzzheavier response: ${JSON.stringify(res.data)}`);
         const link = `https://buzzheavier.com/${id}`;
         console.log(`  [buzzheavier] ${link}`);
         return link;
     });
 }
 
-async function uploadToPixeldrain(filePath) {
-    return withRetry('pixeldrain', async () => {
-        const fileName = path.basename(filePath);
-        const fileData = fs.createReadStream(filePath);
-        const res = await axios.put(
-            `https://pixeldrain.com/api/file/${encodeURIComponent(fileName)}`,
-            fileData,
-            {
-                auth: {
-                    username: '',
-                    password: process.env.PIXELDRAIN_API_KEY
-                },
-                headers: {
-                    'Content-Type': 'application/octet-stream'
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity,
-                timeout: 600000
-            }
-        );
-        const id = res.data?.id;
-        if (!id) throw new Error(`unexpected pixeldrain response`);
-        const link = `https://pixeldrain.com/u/${id}`;
-        console.log(`  [pixeldrain] ${link}`);
-        return link;
-    });
+
+const CATBOX_MAX_FILE_SIZE_B = 200 * 1024 * 1024;
+
+async function uploadToQuax(filePath) {
+    if (!mirrorEnabled('quax')) {
+        console.log('  [qu.ax] Skipped — disabled by admin');
+        return null;
+    }
+    return uploadToMirror('qu.ax', process.env.QUAX_API, filePath);
 }
 
 async function uploadToFileditch(filePath) {
+    if (!mirrorEnabled('fileditch')) {
+        console.log('  [fileditch] Skipped — disabled by admin');
+        return null;
+    }
     return withRetry('fileditch', async () => {
         const fileName = path.basename(filePath);
-        const fileData = fs.createReadStream(filePath);
         const fileSize = fs.statSync(filePath).size;
+        const fileData = fs.createReadStream(filePath);
         const res = await axios.put(
-            `${process.env.FILEDITCH_API}?filename=${encodeURIComponent(fileName)}`,
+            `https://new.fileditch.com/upload.php`,
             fileData,
             {
                 headers: {
@@ -282,25 +287,9 @@ async function uploadToFileditch(filePath) {
     });
 }
 
-const CATBOX_MAX_FILE_SIZE_B = 200 * 1024 * 1024;
-
-// Catbox temporarily paused — remove this line after 72 hrs to re-enable
-const CATBOX_PAUSED_UNTIL = new Date('2026-04-24T' + new Date().toISOString().slice(11));
-
-// Qu.ax mirror temporarily paused — remove this line after 4 days to re-enable
-const QUAX_PAUSED_UNTIL = new Date('2026-04-26T' + new Date().toISOString().slice(11));
-
-async function uploadToQuax(filePath) {
-    if (new Date() < QUAX_PAUSED_UNTIL) {
-        console.log(`  [qu.ax] Skipping — paused until ${QUAX_PAUSED_UNTIL.toISOString()}`);
-        return null;
-    }
-    return uploadToMirror('qu.ax', process.env.QUAX_API, filePath);
-}
-
 async function uploadToCatbox(filePath) {
-    if (new Date() < CATBOX_PAUSED_UNTIL) {
-        console.log(`  [catbox] Skipping — paused until ${CATBOX_PAUSED_UNTIL.toISOString()}`);
+    if (!mirrorEnabled('catbox')) {
+        console.log('  [catbox] Skipped — disabled by admin');
         return null;
     }
     const fileSize = fs.statSync(filePath).size;
@@ -324,21 +313,6 @@ async function uploadToCatbox(filePath) {
         console.log(`  [catbox] ${link}`);
         return link;
     });
-}
-
-async function upvotePost(postId) {
-    const params = new URLSearchParams();
-    params.append('id', String(postId));
-    params.append('type', 'true');
-    params.append('direction', 'true');
-    try {
-        await axios.post('https://api.scored.co/api/v2/action/vote', params, {
-            headers: { ...scoredHeaders(), 'content-type': 'application/x-www-form-urlencoded' }
-        });
-        console.log(`  [upvote] Upvoted post ${postId} OK`);
-    } catch (e) {
-        console.error(`  [upvote] FAILED ${safeErrorMessage(e)}`);
-    }
 }
 
 async function postComment(postId, content, community) {
@@ -373,8 +347,6 @@ async function processPost(post, community) {
     const author    = post.author ?? 'Unknown';
     const videoLink = getVideoLink(post);
 
-    upvotePost(postId); // fire-and-forget — doesn't block the download
-
     if (!videoLink) return;
 
     let safeVideoLink;
@@ -389,12 +361,17 @@ async function processPost(post, community) {
     const wmarkPath = path.join(__dirname, `temp_${postId}_${ts}_wm.mp4`);
 
     try {
-        let catboxLink = null, quaxLink = null, pixeldrainLink = null, buzzheavierLink = null;
+        let catboxLink = null, quaxLink = null, buzzheavierLink = null;
         let fileditchLink = null;
 
         let downloadUrl = safeVideoLink;
-        if (downloadUrl.includes('pixeldrain.com/u/')) {
-            downloadUrl = downloadUrl.replace('/u/', '/api/file/');
+
+        // Snapshot state once per post so all uploads use a consistent toggle view
+        const mirrorState = loadState();
+        const anyEnabled  = Object.values(mirrorState).some(Boolean);
+        if (!anyEnabled) {
+            console.log(`  [${postId}] All mirrors disabled — skipping download & upload`);
+            return;
         }
 
         console.log(`  Downloading for mirrors...`);
@@ -406,23 +383,20 @@ async function processPost(post, community) {
         console.log(`  Uploading mirrors (watermarked)...`);
         const uploads = await Promise.all([
             uploadToQuax(wmarkPath),
-            uploadToPixeldrain(wmarkPath),
             uploadToBuzzheavier(wmarkPath),
             uploadToFileditch(wmarkPath),
             uploadToCatbox(wmarkPath),
         ]);
 
         if (!quaxLink)        quaxLink        = uploads[0];
-        if (!pixeldrainLink)  pixeldrainLink  = uploads[1];
-        if (!buzzheavierLink) buzzheavierLink = uploads[2];
-        if (!fileditchLink)   fileditchLink   = uploads[3];
-        if (!catboxLink)      catboxLink      = uploads[4];
+        if (!buzzheavierLink) buzzheavierLink = uploads[1];
+        if (!fileditchLink)   fileditchLink   = uploads[2];
+        if (!catboxLink)      catboxLink      = uploads[3];
 
         const mirrorLines = [
             fileditchLink   ? `FileDitch: ${sanitizeUrl(fileditchLink)}`       : null,
             catboxLink      ? `Catbox: ${sanitizeUrl(catboxLink)}`             : null,
             quaxLink        ? `Qu.ax: ${sanitizeUrl(quaxLink)}`                : null,
-            pixeldrainLink  ? `Pixeldrain: ${sanitizeUrl(pixeldrainLink)}`     : null,
             buzzheavierLink ? `BuzzHeavier: ${sanitizeUrl(buzzheavierLink)}`   : null,
         ].filter(Boolean).join('\n');
 
@@ -437,7 +411,7 @@ async function processPost(post, community) {
             title, author,
             original_link: safeVideoLink,
             catbox: catboxLink, fileditch: fileditchLink, quax: quaxLink,
-            pixeldrain: pixeldrainLink, buzzheavier: buzzheavierLink
+            buzzheavier: buzzheavierLink
         });
         if (backups.length > MAX_BACKUPS) backups.splice(0, backups.length - MAX_BACKUPS);
         saveJSONAtomic(BACKUP_FILE, backups);
@@ -471,8 +445,6 @@ async function fetchNewPosts(community) {
         });
 
         if (newPosts.length) {
-            // Synchronous update — no await between add and save, so parallel
-            // community fetches cannot interleave and overwrite each other's IDs.
             newPosts.forEach(p => processedIds.add(p.id));
             saveJSONAtomic(PROCESSED_FILE, [...processedIds]);
         }
