@@ -76,7 +76,7 @@ BUZZHEAVIER_PARENT_ID=your_folder_id
 QUAX_API=[https://qu.ax/upload.php](https://qu.ax/upload.php)
 ```
 <h3>2. Installation</h3>
-<pre><code class="language-bash"># Install dependencies
+<pre><code class="language-bash">Install dependencies
 npm install
 
 Start the polling bot
