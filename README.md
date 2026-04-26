@@ -79,10 +79,10 @@ QUAX_API=[https://qu.ax/upload.php](https://qu.ax/upload.php)
 <pre><code class="language-bash"># Install dependencies
 npm install
 
-# Start the polling bot
+Start the polling bot
 node bot.js
 
-# Run the admin dashboard
+Run the admin dashboard
 node admin.js</code></pre>
 
 <hr />
