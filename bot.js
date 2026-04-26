@@ -5,12 +5,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
 import 'dotenv/config';
-import { loadState } from './admin.js';
+import { loadState, COMMUNITIES } from './admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-const COMMUNITIES        = ['spictank', 'thenetwork'];
 const SCORED_FEED_API    = c => `https://scored.co/api/v2/post/newv2.json?community=${c}`;
 const SCORED_COMMENT_API = 'https://api.scored.co/api/v2/action/create_comment';
 
@@ -352,10 +351,10 @@ async function processPost(post, community) {
         ].filter(Boolean).join('\n');
 
         if (mirrorLines) {
-            if (state.comments !== false) {
+            if (state[`comments_${community}`] !== false) {
                 await postComment(postId, `**Backup Mirrors:**\n\n${mirrorLines}`, community);
             } else {
-                console.log('  [comment] Skipped — comments disabled');
+                console.log(`  [comment] Skipped — comments disabled for c/${community}`);
             }
         }
 

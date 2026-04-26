@@ -11,8 +11,9 @@ const __dirname  = path.dirname(__filename);
 export const STATE_FILE = path.join(__dirname, 'mirror-state.json');
 const PORT = parseInt(process.env.ADMIN_PORT ?? '3000', 10);
 
-export const MIRRORS  = ['quax', 'catbox', 'buzzheavier', 'fileditch'];
-export const FEATURES = ['watermark', 'comments'];      // non-mirror toggles
+export const MIRRORS     = ['quax', 'catbox', 'buzzheavier', 'fileditch'];
+export const COMMUNITIES = ['spictank', 'thenetwork'];
+export const FEATURES    = ['watermark', ...COMMUNITIES.map(c => `comments_${c}`)];
 const ALL_KEYS = new Set([...MIRRORS, ...FEATURES]);
 
 // ── State helpers ─────────────────────────────────────────────────────────────
@@ -165,9 +166,16 @@ function dashboardPage(state) {
       </div>`;
     };
 
-    const mirrorCards   = MIRRORS.map(m => makeCard(m, mirrorMeta[m].label, mirrorMeta[m].icon)).join('\n');
+    const communityMeta = {
+        spictank:   { label: 'c/spictank',   icon: '💬' },
+        thenetwork: { label: 'c/thenetwork', icon: '💬' },
+    };
+
+    const mirrorCards    = MIRRORS.map(m => makeCard(m, mirrorMeta[m].label, mirrorMeta[m].icon)).join('\n');
     const watermarkCard  = makeCard('watermark', 'Watermark (IPLOGO.jpeg)', '🖼️');
-    const commentsCard   = makeCard('comments',  'Community Comments',      '💬');
+    const commentCards   = COMMUNITIES.map(c =>
+        makeCard(`comments_${c}`, `Comments · ${communityMeta[c].label}`, communityMeta[c].icon)
+    ).join('\n');
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -218,7 +226,8 @@ function dashboardPage(state) {
     </div>
     <div class="section-title">Processing</div>
     ${watermarkCard}
-    ${commentsCard}
+    <div class="section-title" style="margin-top:1.5rem">Community Comments</div>
+    ${commentCards}
     <div class="section-title" style="margin-top:1.5rem">Mirrors</div>
     ${mirrorCards}
   </main>
