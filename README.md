@@ -75,33 +75,35 @@ BUZZHEAVIER_API_KEY=your_key
 BUZZHEAVIER_PARENT_ID=your_folder_id
 QUAX_API=[https://qu.ax/upload.php](https://qu.ax/upload.php)
 ```
-
-2. Installation
-Bash
-# Install dependencies
+<h3>2. Installation</h3>
+<pre><code class="language-bash"># Install dependencies
 npm install
 
 # Start the polling bot
 node bot.js
+
 # Run the admin dashboard
-node admin.js
-🔄 Content Lifecycle
-Discovery: The bot fetches JSON feeds from Scored.co.
+node admin.js</code></pre>
 
-Validation: Checks for new IDs and ensures file sizes are under 2048 MB.
+<hr />
 
-Processing: Applies the watermark overlay and copies the audio stream to maintain quality.
+<h2>🔄 Content Lifecycle</h2>
+<ol>
+  <li><b>Discovery:</b> The bot fetches JSON feeds from Scored.co.</li>
+  <li><b>Validation:</b> Checks for new IDs and ensures file sizes are under 2048 MB.</li>
+  <li><b>Processing:</b> Applies the watermark overlay and copies the audio stream to maintain quality.</li>
+  <li><b>Distribution:</b> Simultaneously uploads to all active mirrors enabled in the dashboard.</li>
+  <li><b>Notification:</b> Posts a formatted markdown comment with mirror links back to the original thread.</li>
+</ol>
 
-Distribution: Simultaneously uploads to all active mirrors enabled in the dashboard.
+<hr />
 
-Notification: Posts a formatted markdown comment with mirror links back to the original thread.
+<h2>🎥 Media Processing & Watermarking</h2>
+<p>The bot utilizes a high-efficiency FFmpeg pipeline optimized for speed and low CPU overhead.</p>
 
-🎥 Media Processing & Watermarking
-The bot utilizes a high-efficiency FFmpeg pipeline optimized for speed and low CPU overhead.
-
-Performance Safeguards
-Timeouts: Media processes are capped at 600,000ms to prevent hanging.
-
-Atomic Cleanup: Temporary .mp4 files are unlinked in the finally block to prevent disk bloat.
-
-Mirror Persistence: Mirror states are cached with a 5-second TTL to avoid excessive disk reads.
+<h3>Performance Safeguards</h3>
+<ul>
+  <li><b>Timeouts:</b> Media processes are capped at 600,000ms to prevent hanging.</li>
+  <li><b>Atomic Cleanup:</b> Temporary <code>.mp4</code> files are unlinked in the <code>finally</code> block to prevent disk bloat.</li>
+  <li><b>Mirror Persistence:</b> Mirror states are cached with a 5-second TTL to avoid excessive disk reads.</li>
+</ul>
