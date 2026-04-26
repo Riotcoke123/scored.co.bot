@@ -74,6 +74,8 @@ CATBOX_USERHASH=your_hash
 BUZZHEAVIER_API_KEY=your_key
 BUZZHEAVIER_PARENT_ID=your_folder_id
 QUAX_API=[https://qu.ax/upload.php](https://qu.ax/upload.php)
+```
+
 2. Installation
 Bash
 # Install dependencies
