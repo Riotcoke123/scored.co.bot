@@ -184,6 +184,3 @@ node clipper.js</code></pre>
 <p>Distributed under the MIT License. See <code>LICENSE</code> for more details.</p>
 
 <hr />
-
-<h2>📄 License</h2>
-<p>Distributed under the MIT License. See <code>LICENSE</code> for more details.</p>
