@@ -25,7 +25,6 @@ const ALLOWED_DOWNLOAD_HOSTS = new Set([
     'fileditch.com', 'new.fileditch.com', 'qu.ax',
     'catbox.moe', 'files.catbox.moe',
     'videy.co', 'cdn.videy.co',
-    'buzzheavier.com', 'w.buzzheavier.com',
 ]);
 
 const SKIP_DOMAINS_RE = /youtube\.com|youtu\.be|kick\.com|x\.com|twitter\.com|sickchirpse\.com|instagram\.com|twitch\.tv|tiktok\.com|odysee\.com|bitchute\.com/;
@@ -147,7 +146,7 @@ async function downloadVideo(url, dest) {
 
 // ── Watermark ─────────────────────────────────────────────────────────────────
 
-const LOGO_PATH = path.join(__dirname, 'IPLOGO.jpeg');
+const LOGO_PATH = path.join(__dirname, 'thenetwork.png');
 
 async function watermarkVideo(inputPath, outputPath) {
     return new Promise((resolve, reject) => {
@@ -202,33 +201,6 @@ async function uploadToQuax(filePath, state) {
     return uploadToMirror('qu.ax', process.env.QUAX_API, filePath);
 }
 
-async function uploadToBuzzheavier(filePath, state) {
-    if (!mirrorEnabled('buzzheavier', state)) { console.log('  [buzzheavier] Skipped — disabled'); return null; }
-    return withRetry('buzzheavier', async () => {
-        const fileName = path.basename(filePath);
-        const fileSize = fs.statSync(filePath).size;
-        const res = await axios.put(
-            `https://w.buzzheavier.com/${process.env.BUZZHEAVIER_PARENT_ID}/${encodeURIComponent(fileName)}`,
-            fs.createReadStream(filePath),
-            {
-                headers: {
-                    'Content-Type':   'application/octet-stream',
-                    'Content-Length': fileSize,
-                    'Authorization':  `Bearer ${process.env.BUZZHEAVIER_API_KEY}`,
-                },
-                maxContentLength: Infinity,
-                maxBodyLength:    Infinity,
-                timeout:          600_000,
-            }
-        );
-        const id = res.data?.data?.id ?? null;
-        if (!id) throw new Error(`unexpected buzzheavier response`);
-        const link = `https://buzzheavier.com/${id}`;
-        console.log(`  [buzzheavier] ${link}`);
-        return link;
-    });
-}
-
 async function uploadToFileditch(filePath, state) {
     if (!mirrorEnabled('fileditch', state)) { console.log('  [fileditch] Skipped — disabled'); return null; }
     return withRetry('fileditch', async () => {
@@ -277,9 +249,7 @@ const scoredHeaders = (community = COMMUNITIES[0]) => ({
     'referer':        `https://scored.co/c/${community}`,
     'user-agent':     process.env.USER_AGENT,
     'x-api-key':      process.env.SCORED_API_KEY,
-    'x-api-platform': 'Scored-Desktop',
     'x-api-secret':   process.env.SCORED_API_SECRET,
-    'x-xsrf-token':   process.env.SCORED_XSRF_TOKEN,
 });
 
 async function postComment(postId, content, community) {
@@ -336,9 +306,8 @@ async function processPost(post, community) {
         }
 
         console.log(`  Uploading to mirrors...`);
-        const [quaxLink, buzzheavierLink, fileditchLink, catboxLink] = await Promise.all([
+        const [quaxLink, fileditchLink, catboxLink] = await Promise.all([
             uploadToQuax(uploadPath, state),
-            uploadToBuzzheavier(uploadPath, state),
             uploadToFileditch(uploadPath, state),
             uploadToCatbox(uploadPath, state),
         ]);
@@ -347,7 +316,6 @@ async function processPost(post, community) {
             fileditchLink   && `FileDitch: ${sanitizeUrl(fileditchLink)}`,
             catboxLink      && `Catbox: ${sanitizeUrl(catboxLink)}`,
             quaxLink        && `Qu.ax: ${sanitizeUrl(quaxLink)}`,
-            buzzheavierLink && `BuzzHeavier: ${sanitizeUrl(buzzheavierLink)}`,
         ].filter(Boolean).join('\n');
 
         if (mirrorLines) {
@@ -362,7 +330,7 @@ async function processPost(post, community) {
             timestamp: new Date().toISOString(),
             scored_post_id: postId, title, author,
             original_link: safeVideoLink,
-            catbox: catboxLink, fileditch: fileditchLink, quax: quaxLink, buzzheavier: buzzheavierLink,
+            catbox: catboxLink, fileditch: fileditchLink, quax: quaxLink,
         });
         if (backupLog.length > MAX_BACKUPS) backupLog.splice(0, backupLog.length - MAX_BACKUPS);
         saveJSONAtomic(BACKUP_FILE, backupLog);

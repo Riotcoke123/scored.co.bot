@@ -11,8 +11,8 @@ const __dirname  = path.dirname(__filename);
 export const STATE_FILE = path.join(__dirname, 'mirror-state.json');
 const PORT = parseInt(process.env.ADMIN_PORT ?? '3000', 10);
 
-export const MIRRORS     = ['quax', 'catbox', 'buzzheavier', 'fileditch'];
-export const COMMUNITIES = ['spictank', 'thenetwork'];
+export const MIRRORS     = ['quax', 'catbox', 'fileditch'];
+export const COMMUNITIES = ['theNETWORK'];
 export const FEATURES    = ['watermark', ...COMMUNITIES.map(c => `comments_${c}`)];
 const ALL_KEYS = new Set([...MIRRORS, ...FEATURES]);
 
@@ -151,7 +151,6 @@ function dashboardPage(state) {
     const mirrorMeta = {
         quax:        { label: 'Qu.ax',      icon: '🟣' },
         catbox:      { label: 'Catbox',      icon: '📦' },
-        buzzheavier: { label: 'BuzzHeavier', icon: '🟠' },
         fileditch:   { label: 'FileDitch',   icon: '🟢' },
     };
 
@@ -167,7 +166,6 @@ function dashboardPage(state) {
     };
 
     const communityMeta = {
-        spictank:   { label: 'c/spictank',   icon: '💬' },
         thenetwork: { label: 'c/thenetwork', icon: '💬' },
     };
 
