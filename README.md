@@ -17,7 +17,7 @@
 
 <h3>🤖 1. Automated Scored Bot & Mirroring</h3>
 <ul>
-  <li><strong>Automated Polling:</strong> Regularly checks community feeds (e.g., <code>c/spictank</code> and <code>c/thenetwork</code>) every 90 seconds for fresh video content submissions.</li>
+  <li><strong>Automated Polling:</strong> Regularly checks community feeds (e.g. <code>c/thenetwork</code>) every 90 seconds for fresh video content submissions.</li>
   <li><strong>Rapid Watermarking:</strong> Leverages an optimized FFmpeg pipeline using the <code>ultrafast</code> preset to seamlessly overlay branding graphics (<code>IPLOGO.jpeg</code>) with minimal CPU overhead.</li>
   <li><strong>Multi-Mirror Redundancy:</strong> Concurrently dispatches assets to decentralized public hosts including <strong>Qu.ax</strong>, <strong>Catbox</strong>, and <strong>FileDitch</strong>.</li>
   <li><strong>Admin Management Panel:</strong> A secure web dashboard built to toggle individual mirrors, toggle live watermarking settings, and moderate community text responses on the fly.</li>
