@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/SQLite-WAL__Mode-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite WAL Mode" />
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License MIT" />
   
-  <h1 align="center">🪞 Scored Mirror & Live Stream Clipper Suite</h1>
+  <h1 align="center">Scored Mirror & Live Stream Clipper Suite</h1>
   <p align="center">
     <strong>An enterprise-grade automated pipeline for content redistribution, multi-platform stream clipping, dynamic watermarking, and community management.</strong>
   </p>
