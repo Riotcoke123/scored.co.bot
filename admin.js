@@ -165,9 +165,9 @@ function dashboardPage(state) {
       </div>`;
     };
 
-    const communityMeta = {
-        thenetwork: { label: 'c/thenetwork', icon: '💬' },
-    };
+ const communityMeta = {
+    theNETWORK: { label: 'c/theNETWORK', icon: '💬' },  // was 'thenetwork'
+};
 
     const mirrorCards    = MIRRORS.map(m => makeCard(m, mirrorMeta[m].label, mirrorMeta[m].icon)).join('\n');
     const watermarkCard  = makeCard('watermark', 'Watermark (IPLOGO.jpeg)', '🖼️');
