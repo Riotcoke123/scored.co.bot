@@ -2,12 +2,11 @@
   <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status Active" />
   <img src="https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 18+" />
   <img src="https://img.shields.io/badge/FFmpeg-Processing-007808?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="FFmpeg Processing" />
-  <img src="https://img.shields.io/badge/SQLite-WAL__Mode-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite WAL Mode" />
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License MIT" />
   
   <h1 align="center">Scored Mirror & Live Stream Clipper Suite</h1>
   <p align="center">
-    <strong>An enterprise-grade automated pipeline for content redistribution, multi-platform stream clipping, dynamic watermarking, and community management.</strong>
+    <strong>An automated pipeline for content redistribution, multi-platform stream clipping, dynamic watermarking, and community management.</strong>
   </p>
 </div>
 
@@ -17,10 +16,10 @@
 
 <h3>🤖 1. Automated Scored Bot & Mirroring</h3>
 <ul>
-  <li><strong>Automated Polling:</strong> Regularly checks community feeds (e.g. <code>c/thenetwork</code>) every 90 seconds for fresh video content submissions.</li>
-  <li><strong>Rapid Watermarking:</strong> Leverages an optimized FFmpeg pipeline using the <code>ultrafast</code> preset to seamlessly overlay branding graphics (<code>thenetwork-icon-192x192.png</code>) with minimal CPU overhead.</li>
-  <li><strong>Multi-Mirror Redundancy:</strong> Concurrently dispatches assets to decentralized public hosts including <strong>Qu.ax</strong>, <strong>Catbox</strong>, and <strong>FileDitch</strong>.</li>
-  <li><strong>Admin Management Panel:</strong> A secure web dashboard built to toggle individual mirrors, toggle live watermarking settings, and moderate community text responses on the fly.</li>
+  <li><strong>Automated Polling:</strong> Regularly checks community feeds (e.g. <code>c/theNETWORK</code>) every 90 seconds for fresh video content submissions while ignoring external social platform domains.</li>
+  <li><strong>Rapid Watermarking:</strong> Leverages an optimized FFmpeg pipeline using the <code>ultrafast</code> preset and dual-thread throttling to seamlessly overlay branding graphics (<code>thenetwork.png</code>) with minimal CPU overhead.</li>
+  <li><strong>Multi-Mirror Redundancy:</strong> Concurrently dispatches assets to decentralized public hosts including <strong>Qu.ax</strong>, <strong>Catbox</strong>, <strong>FileDitch</strong>, and <strong>Videy</strong>.</li>
+  <li><strong>Admin Management Panel:</strong> A secure web dashboard built to toggle individual mirrors, manage watermark settings, toggle community comment distribution, and monitor active mirror states on the fly.</li>
 </ul>
 
 <h3>🎬 2. Standalone Live Stream Clipper Platform</h3>
@@ -46,23 +45,23 @@
   <tbody>
     <tr>
       <td><strong>Runtime Environment</strong></td>
-      <td>Node.js (ESM / CJS)</td>
-      <td>High-concurrency script execution.</td>
+      <td>Node.js (ESM Framework)</td>
+      <td>High-concurrency script execution using modern EcmaScript Modules.</td>
     </tr>
     <tr>
       <td><strong>Web Infrastructure</strong></td>
-      <td>Express.js</td>
-      <td>Powers the Admin Dashboard, Public Static Router, and Clipper management API.</td>
+      <td>Express.js &amp; Express-Session</td>
+      <td>Powers the authenticated Admin Dashboard, state toggles, and Clipper management API.</td>
     </tr>
     <tr>
       <td><strong>Media Processing</strong></td>
       <td>FFmpeg &amp; <code>yt-dlp</code></td>
-      <td>Handles demuxing, video stream scaling, audio bit-copying, and live HLS recording.</td>
+      <td>Handles downscaling, watermarking overlays, audio bit-stream copying, and live HLS recording.</td>
     </tr>
     <tr>
       <td><strong>Persistence (Bot)</strong></td>
-      <td>Atomic JSON</td>
-      <td>Low-overhead state tracking with <code>.tmp</code> swap safety to prevent file corruption.</td>
+      <td>Atomic JSON Stores</td>
+      <td>Low-overhead local tracking (<code>processed.json</code>, <code>backups.json</code>, <code>mirror-state.json</code>) utilizing <code>.tmp</code> file swap streams to eliminate runtime corruption.</td>
     </tr>
     <tr>
       <td><strong>Persistence (Clipper)</strong></td>
@@ -71,8 +70,8 @@
     </tr>
     <tr>
       <td><strong>Network Core</strong></td>
-      <td>Axios &amp; Node-Fetch</td>
-      <td>Manages Scored JSON feed polling, multi-part form payloads, and API syncs.</td>
+      <td>Axios &amp; Form-Data</td>
+      <td>Manages multi-part mirror uploads, stream resource downloads, and Scored API interactions.</td>
     </tr>
   </tbody>
 </table>
@@ -85,7 +84,7 @@
 <p>Create a unified <code>.env</code> file in your root working directory. Customize the values below based on your system needs:</p>
 
 <pre><code># ==========================================
-# 🛡️ ADMIN PANEL &amp; CONTROL CENTER
+# 🛡️ ADMIN PANEL & CONTROL CENTER
 # ==========================================
 ADMIN_PORT=3000
 ADMIN_USER=admin
@@ -97,7 +96,6 @@ SESSION_SECRET=change-me-to-a-long-random-string
 # ==========================================
 SCORED_API_KEY=your_scored_api_key
 SCORED_API_SECRET=your_scored_api_secret
-SCORED_XSRF_TOKEN=your_scored_xsrf_token
 USER_AGENT=ScoredRedistributionBot/1.0
 
 # ==========================================
@@ -129,10 +127,13 @@ KICK_CLIENT_SECRET=your_kick_client_secret
 # 📦 DISTRIBUTED STORAGE MULTI-MIRROR AUTH
 # ==========================================
 CATBOX_USERHASH=your_catbox_userhash
-QUAX_API=https://qu.ax/upload.php</code></pre>
+CATBOX_API=https://catbox.moe/user/api.php
+QUAX_API=https://qu.ax/upload.php
+VIDEY_API_KEY=your_videy_key
+VIDEY_API_SECRET=your_videy_secret</code></pre>
 
 <h3>2. Installation &amp; Launch</h3>
-<p>Ensure your host environment has a globally available binary of <strong>FFmpeg</strong> and <strong>yt-dlp</strong> installed before bootstrapping the system.</p>
+<p>Ensure your host environment has a globally available binary of <strong>FFmpeg</strong> installed before bootstrapping the pipeline.</p>
 
 <pre><code class="language-bash"># 1. Clone the repository and navigate to the project directory
 git clone https://github.com/Riotcoke123/scored.co.bot.git
@@ -157,25 +158,25 @@ node clipper.js</code></pre>
 <h3>A. Polling Bot Pipeline</h3>
 <ol>
   <li><strong>Discovery:</strong> The bot pulls real-time JSON endpoint feeds from specified sub-communities on Scored.co.</li>
-  <li><strong>Validation:</strong> Checks unique media IDs against state logs and rules out files exceeding 2048 MB.</li>
-  <li><strong>Processing:</strong> Hands off streams to the FFmpeg engine, formats sizing, applies logo overlays, and replicates native audio track structures.</li>
-  <li><strong>Distribution:</strong> Broadcasts the post payload concurrently across all network mirrors flagged active in the Admin Dashboard.</li>
-  <li><strong>Notification:</strong> Fires a structured, markdown-formatted delivery template with redundant mirror access links right back into the source thread.</li>
+  <li><strong>Validation:</strong> Filters against explicit streaming link structures, checks unique media IDs via memory maps, and throws out assets scaling past 2GB.</li>
+  <li><strong>Processing:</strong> Streams chunks to local disk, checks current feature flags, applies video watermarking layers via custom structural overlays, and strips local items out of cache upon completion.</li>
+  <li><strong>Distribution:</strong> Broadcasts the payload concurrently across all network mirror targets currently marked active in the Admin state engine.</li>
+  <li><strong>Notification:</strong> Inserts a markdown-formatted message containing active mirror links back into the source thread under your targeting specifications.</li>
 </ol>
 
 <h3>B. Live Stream Clipping Pipeline</h3>
 <pre><code>[User Request] ➔ [Security/SSRF Guard Check] ➔ [yt-dlp HLS Manifest Resolver]
-                                                               │
-[Public Delivery Link] 🔀 [Distributed Storage Uploads] ◀ [FFmpeg DVR Seek &amp; Capture]</code></pre>
+                                                                │
+[Public Delivery Link] 🔀 [Distributed Storage Uploads] ◀ [FFmpeg DVR Seek & Capture]</code></pre>
 
 <hr />
 
 <h2>🎥 Media Processing Safeguards</h2>
 <ul>
-  <li><strong>Stale Process Timeouts:</strong> Media execution boundaries are strictly capped at 600,000ms to guarantee zombie processes don't leak CPU threads.</li>
-  <li><strong>Atomic Workspace Cleanups:</strong> Intermediate fragments and local temporary files are forcefully unlinked within execution blocks to maintain low disk overhead.</li>
-  <li><strong>Cached Mirror States:</strong> Persistent states use an internal time-to-live cache strategy to mitigate disk thrashing during rapid poll sequences.</li>
-  <li><strong>SSRF Domain White-Listing:</strong> User inputs are thoroughly sanitized and limited strictly to allowed streaming infrastructure domains (<code>youtube.com</code>, <code>twitch.tv</code>, <code>kick.com</code>).</li>
+  <li><strong>Stale Process Timeouts:</strong> Media execution operations and network streaming boundaries are strictly capped at 600,000ms to guarantee zombie processes don't bleed processing loops.</li>
+  <li><strong>Atomic Workspace Cleanups:</strong> Local directory sweeps find and prune leftover <code>temp_*.mp4</code> engine traces during boot cycles and execution faults automatically.</li>
+  <li><strong>State Cache Throttling:</strong> Reads to the underlying mirror state utilize a 5,000ms Time-to-Live (TTL) storage cache to remove intense disk-thrashing routines during post processing cycles.</li>
+  <li><strong>SSRF Domain Whitelisting:</strong> Host evaluations enforce rigid whitelisting layers on incoming assets, processing links solely from verified distribution roots (e.g., <code>qu.ax</code>, <code>fileditch.com</code>, <code>catbox.moe</code>, <code>videy.co</code>).</li>
 </ul>
 
 <hr />
