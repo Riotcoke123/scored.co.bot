@@ -243,6 +243,33 @@ async function uploadToCatbox(filePath, state) {
     });
 }
 
+async function uploadToVidey(filePath, state) {
+    if (!mirrorEnabled('videy', state)) { console.log('  [videy] Skipped — disabled'); return null; }
+    return withRetry('videy', async () => {
+        const form = new FormData();
+        form.append('file', fs.createReadStream(filePath), {
+            filename:    path.basename(filePath),
+            contentType: 'video/mp4',
+        });
+        const res = await axios.post('https://videy.co/api/upload', form, {
+            headers: {
+                ...form.getHeaders(),
+                'x-api-key':    process.env.VIDEY_API_KEY,
+                'x-api-secret': process.env.VIDEY_API_SECRET,
+            },
+            maxContentLength: Infinity,
+            maxBodyLength:    Infinity,
+            timeout:          600_000,
+        });
+        // Response: { id: "abc123" } → https://cdn.videy.co/abc123.mp4
+        const id   = res.data?.id ?? null;
+        const link = id ? `https://cdn.videy.co/${id}.mp4` : (res.data?.url ?? null);
+        if (!link) throw new Error(`unexpected videy response: ${JSON.stringify(res.data)}`);
+        console.log(`  [videy] ${link}`);
+        return link;
+    });
+}
+
 // ── Scored API ────────────────────────────────────────────────────────────────
 
 const scoredHeaders = (community = COMMUNITIES[0]) => ({
@@ -306,16 +333,18 @@ async function processPost(post, community) {
         }
 
         console.log(`  Uploading to mirrors...`);
-        const [quaxLink, fileditchLink, catboxLink] = await Promise.all([
+        const [quaxLink, fileditchLink, catboxLink, videyLink] = await Promise.all([
             uploadToQuax(uploadPath, state),
             uploadToFileditch(uploadPath, state),
             uploadToCatbox(uploadPath, state),
+            uploadToVidey(uploadPath, state),
         ]);
 
         const mirrorLines = [
             fileditchLink   && `FileDitch: ${sanitizeUrl(fileditchLink)}`,
             catboxLink      && `Catbox: ${sanitizeUrl(catboxLink)}`,
             quaxLink        && `Qu.ax: ${sanitizeUrl(quaxLink)}`,
+            videyLink       && `Videy: ${sanitizeUrl(videyLink)}`,
         ].filter(Boolean).join('\n');
 
         if (mirrorLines) {
@@ -330,7 +359,7 @@ async function processPost(post, community) {
             timestamp: new Date().toISOString(),
             scored_post_id: postId, title, author,
             original_link: safeVideoLink,
-            catbox: catboxLink, fileditch: fileditchLink, quax: quaxLink,
+            catbox: catboxLink, fileditch: fileditchLink, quax: quaxLink, videy: videyLink,
         });
         if (backupLog.length > MAX_BACKUPS) backupLog.splice(0, backupLog.length - MAX_BACKUPS);
         saveJSONAtomic(BACKUP_FILE, backupLog);
