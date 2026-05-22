@@ -12,7 +12,7 @@ export const STATE_FILE = path.join(__dirname, 'mirror-state.json');
 const PORT = parseInt(process.env.ADMIN_PORT ?? '3000', 10);
 
 export const MIRRORS     = ['quax', 'catbox', 'fileditch', 'videy'];
-export const COMMUNITIES = ['theNETWORK'];
+export const COMMUNITIES = ['theNETWORK', 'spictank'];
 export const FEATURES    = ['watermark', ...COMMUNITIES.map(c => `comments_${c}`)];
 const ALL_KEYS = new Set([...MIRRORS, ...FEATURES]);
 
@@ -167,11 +167,12 @@ function dashboardPage(state) {
     };
 
  const communityMeta = {
-    theNETWORK: { label: 'c/theNETWORK', icon: '💬' },  // was 'thenetwork'
+    theNETWORK: { label: 'c/theNETWORK', icon: '💬' },
+    spictank:   { label: 'c/spictank',   icon: '💬' },
 };
 
     const mirrorCards    = MIRRORS.map(m => makeCard(m, mirrorMeta[m].label, mirrorMeta[m].icon)).join('\n');
-    const watermarkCard  = makeCard('watermark', 'Watermark (IPLOGO.jpeg)', '🖼️');
+    const watermarkCard  = makeCard('watermark', 'Watermark', '🖼️');
     const commentCards   = COMMUNITIES.map(c =>
         makeCard(`comments_${c}`, `Comments · ${communityMeta[c].label}`, communityMeta[c].icon)
     ).join('\n');
