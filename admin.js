@@ -213,7 +213,7 @@ function dashboardPage(state) {
 </head>
 <body>
   <header>
-    <h1>🪞 Mirror Upload Control</h1>
+    <h1>Mirror Upload Control</h1>
     <form method="POST" action="/logout">
       <button class="logout-btn" type="submit">Sign out</button>
     </form>
