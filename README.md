@@ -1,8 +1,16 @@
-
 <div align="center">
   <h1>🤖 Scored.co Video Backup Bot (beta 2.0)</h1>
 
+  <p>
+    <img src="https://img.shields.io/badge/version-beta%202.0-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/node-%3E%3D%2016-brightgreen.svg?logo=node.js" alt="Node version">
+    <img src="https://img.shields.io/badge/managed_by-PM2-2B037A.svg?logo=pm2" alt="PM2">
+    <img src="https://img.shields.io/badge/video-FFmpeg-007808.svg?logo=ffmpeg" alt="FFmpeg">
+  </p>
+
   <p>An automated Node.js bot for mirroring video content from Scored.co communities to resilient file hosts.</p>
+  
+  <p>📚 <strong><a href="https://docs.scored.co/">Official Scored.co API Documentation</a></strong></p>
 </div>
 
 <hr>
@@ -13,7 +21,7 @@
   <li><strong>Live Admin Dashboard:</strong> Built-in web panel to toggle mirrors, video watermarking, and community comments on the fly without restarting the bot.</li>
   <li><strong>Automated Commenting:</strong> Replies to the original Scored.co post with the generated backup links.</li>
   <li><strong>Video Watermarking:</strong> Optional on-the-fly video watermarking using FFmpeg.</li>
-  <li><strong>Production Ready:</strong> Fully configured for PM2 process management [cite: 2], ensuring the bot auto-restarts and logs properly in a production environment[cite: 3].</li>
+  <li><strong>Production Ready:</strong> Fully configured for PM2 process management, ensuring the bot auto-restarts and logs properly in a production environment.</li>
 </ul>
 
 <h2>⚙️ Prerequisites</h2>
@@ -28,9 +36,9 @@ cd scored.co.bot
 npm install</code></pre>
 
 <h2>🔧 Configuration</h2>
-<p>Create a <code>.env</code> file in the root directory and configure the following variables (use the provided <code>.env</code> file as a template):</p>
+<p>Create a <code>.env</code> file in the root directory and configure the following variables (use the provided <code>.env</code> file as a template). You can reference the <a href="https://docs.scored.co/">Scored API docs</a> for help generating your API keys and tokens:</p>
 <pre><code># Scored API & Authentication
-USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" [cite: 1]
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 SCORED_API_KEY=your_scored_key
 SCORED_API_SECRET=your_scored_secret
 SCORED_XSRF_TOKEN=your_xsrf_token
