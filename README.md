@@ -1,9 +1,7 @@
 
 <div align="center">
   <h1>🤖 Scored.co Video Backup Bot (beta 2.0)</h1>
-  <p>
-    <a href="https://github.com/Riotcoke123/scored.co.bot">View Repository</a>
-  </p>
+
   <p>An automated Node.js bot for mirroring video content from Scored.co communities to resilient file hosts.</p>
 </div>
 
