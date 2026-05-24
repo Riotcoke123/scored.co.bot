@@ -62,7 +62,7 @@ SESSION_SECRET=your_random_session_secret
 <ul>
   <li><code>bot.js</code> - The main polling engine. Scrapes <code>c/theNETWORK</code> and <code>c/spictank</code>, downloads media, processes it, and interfaces with mirror APIs.</li>
   <li><code>admin.js</code> - An Express server hosting the secure, session-based admin dashboard.</li>
-  <li><code>ecosystem.config.cjs</code> - PM2 configuration for reliable deployment[cite: 2].</li>
+  <li><code>ecosystem.config.cjs</code> - PM2 configuration for reliable deployment.</li>
   <li><code>thenetwork.png</code> - <i>(Required)</i> The watermark image applied to videos via FFmpeg.</li>
 </ul>
 
