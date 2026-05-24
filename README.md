@@ -1,7 +1,4 @@
 
-Here is the HTML code for your README.md. You can copy and paste this directly into your GitHub repository's README file; GitHub Markdown natively supports and renders HTML tags, giving you a highly customized and structured page.
-
-HTML
 <div align="center">
   <h1>🤖 Scored.co Video Backup Bot (beta 2.0)</h1>
   <p>
