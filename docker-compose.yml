@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backup-bot:
+    build: .
+    container_name: backup-bot
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      # Map the state and log files to the host machine to persist data across container restarts.
+      # This creates empty files on the host if they don't exist yet.
+      - ./mirror-state.json:/usr/src/app/mirror-state.json
+      - ./backups.json:/usr/src/app/backups.json
+      - ./processed.json:/usr/src/app/processed.json
+      # Ensure your watermark image is accessible
+      - ./thenetwork.png:/usr/src/app/thenetwork.png
