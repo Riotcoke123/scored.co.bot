@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 
@@ -10,6 +11,59 @@ const __dirname  = path.dirname(__filename);
 
 export const STATE_FILE = path.join(__dirname, 'mirror-state.json');
 const PORT = parseInt(process.env.ADMIN_PORT ?? '3000', 10);
+
+// ── Startup credential validation ────────────────────────────────────────────
+// Refuse to start with missing/blank admin credentials or session secret —
+// an empty ADMIN_USER/ADMIN_PASS in .env previously meant `'' === ''` would
+// authenticate ANY blank login attempt.
+const ADMIN_USER      = process.env.ADMIN_USER ?? '';
+const ADMIN_PASS      = process.env.ADMIN_PASS ?? '';
+const SESSION_SECRET  = process.env.SESSION_SECRET ?? '';
+const WEAK_SECRETS    = new Set(['', 'change-me', 'changeme', 'secret']);
+
+if (!ADMIN_USER || !ADMIN_PASS) {
+    console.error('[admin] FATAL: ADMIN_USER and ADMIN_PASS must both be set to non-empty values in .env. Refusing to start.');
+    process.exit(1);
+}
+if (WEAK_SECRETS.has(SESSION_SECRET)) {
+    console.error('[admin] FATAL: SESSION_SECRET is unset or a well-known placeholder. Set a long random value in .env. Refusing to start.');
+    process.exit(1);
+}
+
+/** Constant-time string comparison — avoids leaking match-length via timing. */
+function timingSafeEqual(a, b) {
+    const bufA = Buffer.from(String(a));
+    const bufB = Buffer.from(String(b));
+    // Hash both to a fixed length first so comparison time doesn't depend on
+    // input length either (crypto.timingSafeEqual requires equal-length buffers).
+    const hashA = crypto.createHash('sha256').update(bufA).digest();
+    const hashB = crypto.createHash('sha256').update(bufB).digest();
+    return crypto.timingSafeEqual(hashA, hashB);
+}
+
+// ── Simple login rate limiter (per-IP) ───────────────────────────────────────
+const LOGIN_WINDOW_MS   = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const loginAttempts = new Map(); // ip -> { count, resetAt }
+
+function isRateLimited(ip) {
+    const now = Date.now();
+    const entry = loginAttempts.get(ip);
+    if (!entry || now > entry.resetAt) return false;
+    return entry.count >= LOGIN_MAX_ATTEMPTS;
+}
+function recordFailedLogin(ip) {
+    const now = Date.now();
+    const entry = loginAttempts.get(ip);
+    if (!entry || now > entry.resetAt) {
+        loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    } else {
+        entry.count++;
+    }
+}
+function clearLoginAttempts(ip) {
+    loginAttempts.delete(ip);
+}
 
 export const MIRRORS     = ['quax', 'catbox', 'fileditch', 'videy'];
 export const COMMUNITIES = ['theNETWORK', 'spictank'];
@@ -41,14 +95,28 @@ export function isMirrorEnabled(mirror) {
 // ── Express app ───────────────────────────────────────────────────────────────
 
 const app = express();
+app.set('trust proxy', 1); // needed for correct `secure` cookie detection behind a reverse proxy
 app.use(express.urlencoded({ extended: false }));  // false = faster querystring parser
 app.use(express.json());
 app.use(session({
-    secret: process.env.SESSION_SECRET ?? 'change-me',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true },
+    cookie: {
+        maxAge:   8 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure:   process.env.NODE_ENV === 'production',
+        sameSite: 'strict', // mitigates CSRF on the /toggle, /toggle-all, /logout POST routes
+    },
 }));
+
+// Basic security headers (clickjacking / MIME sniffing / referrer leakage)
+app.use((req, res, next) => {
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+});
 
 function requireAuth(req, res, next) {
     if (req.session?.authenticated) return next();
@@ -68,12 +136,31 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
-        req.session.authenticated = true;
-        req.session.user = username;
-        return res.redirect('/');
+    const ip = req.ip;
+    if (isRateLimited(ip)) {
+        console.log(`[admin] Login blocked — too many attempts from ${ip}`);
+        return res.status(429).send(loginPage('Too many attempts. Try again later.'));
     }
+
+    const { username = '', password = '' } = req.body ?? {};
+    // Reject blank submissions outright, and use constant-time comparison
+    // so neither presence, correctness, nor length of a guess leaks via timing.
+    const ok = username !== '' && password !== ''
+        && timingSafeEqual(username, ADMIN_USER)
+        && timingSafeEqual(password, ADMIN_PASS);
+
+    if (ok) {
+        clearLoginAttempts(ip);
+        req.session.regenerate(err => {
+            if (err) return res.status(500).send(loginPage('Server error.'));
+            req.session.authenticated = true;
+            req.session.user = username;
+            res.redirect('/');
+        });
+        return;
+    }
+
+    recordFailedLogin(ip);
     res.send(loginPage('Invalid credentials.'));
 });
 
