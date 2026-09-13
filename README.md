@@ -21,7 +21,7 @@
 
 `scored.co.bot` polls one or more <a href="https://scored.co">scored.co</a> communities for new video posts, downloads them, stamps them with a watermark, and re-uploads them to several free mirror hosts so the content survives even if the original link dies. It then replies to the original post with a comment linking every mirror it produced.
 
-A small, password-protected **admin dashboard** (built with Express) lets you turn individual mirrors, the watermark step, and per-community commenting on or off at runtime — no redeploy required.
+A small, password-protected **admin dashboard** (built with Express) lets you turn individual mirrors, the watermark step, and per-community commenting on or off at runtime — no redeploy required. The dashboard also has a built-in **self-update system**, so you can push code changes from the browser without SSHing in.
 
 <table>
 <tr>
@@ -42,6 +42,7 @@ A small, password-protected **admin dashboard** (built with Express) lets you tu
 - Session-based login (no default/blank credentials allowed)
 - Toggle each mirror, the watermark step, and per-community comments
 - Rate-limited login attempts
+- Upload code updates, with automatic backup and crash-loop rollback
 - Runs on its own port, separate from the bot process
 
 </td>
@@ -134,6 +135,40 @@ Log in at `/login` with the credentials from your `.env` file. Sessions expire a
 
 ---
 
+## 🔄 Self-updating admin panel
+
+The dashboard's **Update** page (`/update`, linked from the header) lets you push code changes to a running deployment straight from the browser — no SSH, no manual `git pull` — while keeping an automatic safety net in case a change breaks something.
+
+<div align="center">
+<table>
+<tr><td>
+
+| Step | What happens |
+|---|---|
+| 1. Upload | Drop in a `.zip` — either the **full project** or a **partial package** containing only the changed files. Whatever's inside the zip is exactly what gets touched, which is how changed files are auto-detected. |
+| 2. Review | The panel lists every file in the package and whether it's new or an overwrite. |
+| 3. Confirm | Applying requires your admin password again, even though you're already logged in. |
+| 4. Apply | Every file about to be overwritten is backed up first, the new files are copied in, `npm install` runs automatically if `package.json` changed, then the service restarts itself. |
+
+</td></tr>
+</table>
+</div>
+
+**Built-in safety mechanisms:**
+
+- **Pre-flight validation** — every `.js`/`.cjs`/`.mjs` file is syntax-checked and every `.json` file is parsed *before* anything is copied. A bad file aborts the whole update with nothing changed.
+- **Path safety** — a package can't write outside the project folder, and can't touch `.env`, `.git`, `node_modules`, or the updater's own bookkeeping files.
+- **Automatic backups** — every overwritten file is snapshotted before the change, timestamped, and listed on the Update page with a one-click rollback.
+- **Crash-loop rollback** — if the app fails to boot 3 times in a row right after an update, the next startup automatically restores the previous version, no intervention needed. An update is considered verified once it's stayed up for 30 seconds.
+- **Dependency safety net** — if `package.json` changed and `npm install` fails, the update is rolled back immediately instead of restarting into a broken dependency tree.
+- **Cleanup** — uploaded zips and staging files are deleted as soon as they're no longer needed, whether the update succeeds or fails.
+
+> ⚠️ If you deploy with Docker, `docker compose up --build` rebuilds the image from your source tree, which will overwrite anything applied only through the Update page. Keep your repo in sync with what you push through the panel if you plan to rebuild the image later.
+
+See [`UPDATE-SYSTEM.md`](./UPDATE-SYSTEM.md) for the full walkthrough.
+
+---
+
 ## 🔒 Security notes
 
 This project handles API credentials and runs an internet-facing admin panel, so a few things are worth knowing:
@@ -142,6 +177,7 @@ This project handles API credentials and runs an internet-facing admin panel, so
 - **The admin panel binds to `127.0.0.1` by default** in `docker-compose.yml`. If you need remote access, put it behind a reverse proxy (nginx/Caddy) with TLS rather than exposing the port directly.
 - **Downloads are restricted to an explicit host allowlist** (`ALLOWED_DOWNLOAD_HOSTS` in `bot.js`) and must be `https://` — the bot will not fetch arbitrary URLs from post data.
 - **Login is timing-safe and rate-limited** (8 attempts / 15 minutes per IP), and the app refuses to boot with blank or placeholder admin credentials / session secret.
+- **Updates are re-authenticated and sandboxed** — applying or rolling back a package requires re-entering the admin password, uploaded packages can't escape the project folder or touch secrets, and every change is backed up automatically (see [Self-updating admin panel](#-self-updating-admin-panel)).
 - **The container runs as a non-root user** and dependencies are installed from the lockfile via `npm ci` for reproducible, auditable builds.
 - Run <code>npm audit</code> periodically — at the time of writing this repo has **0 known vulnerabilities**.
 
@@ -153,13 +189,18 @@ If you discover a security issue, please open a private security advisory on Git
 
 ```
 scored.co.bot/
-├── bot.js                 # Polls scored.co, downloads, watermarks, mirrors, comments
-├── admin.js                # Express admin dashboard (auth + toggles)
-├── ecosystem.config.cjs    # pm2 process definition
+├── bot.js                   # Polls scored.co, downloads, watermarks, mirrors, comments
+├── admin.js                  # Express admin dashboard (auth + toggles + update panel)
+├── lib/
+│   └── update-manager.js     # Self-update: staging, backup, apply, crash-loop rollback
+├── ecosystem.config.cjs      # pm2 process definition
 ├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
-└── thenetwork-icon-192x192.png
+├── UPDATE-SYSTEM.md          # Full guide to the self-update system
+├── thenetwork-icon-192x192.png
+├── backups/                  # Auto-created — timestamped snapshots from past updates
+└── updates/                  # Auto-created — scratch space while a package is staged
 ```
 
 ---
