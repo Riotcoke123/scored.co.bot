@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Playwright-Scraper-2EAD33.svg?style=for-the-badge&logo=playwright" alt="Playwright">
   <img src="https://img.shields.io/badge/SQLite-Database-003B57.svg?style=for-the-badge&logo=sqlite" alt="SQLite">
   <img src="https://img.shields.io/badge/Docker-Supported-2496ED.svg?style=for-the-badge&logo=docker" alt="Docker">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="MIT License"></a>
 
   <br><br>
 
@@ -21,14 +22,15 @@
 <br>
 
 <p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-supported-platforms">Platforms</a> •
-  <a href="#-tech-stack">Tech Stack</a> •
-  <a href="#-getting-started">Getting Started</a> •
-  <a href="#-configuration">Configuration</a> •
-  <a href="#-api-reference">API</a> •
-  <a href="#-project-structure">Structure</a> •
-  <a href="#-security">Security</a>
+  <a href="#-features" style="color:#ffffff;text-decoration:none;">Features</a> •
+  <a href="#-supported-platforms" style="color:#ffffff;text-decoration:none;">Platforms</a> •
+  <a href="#-tech-stack" style="color:#ffffff;text-decoration:none;">Tech Stack</a> •
+  <a href="#-getting-started" style="color:#ffffff;text-decoration:none;">Getting Started</a> •
+  <a href="#-configuration" style="color:#ffffff;text-decoration:none;">Configuration</a> •
+  <a href="#-api-reference" style="color:#ffffff;text-decoration:none;">API</a> •
+  <a href="#-project-structure" style="color:#ffffff;text-decoration:none;">Structure</a> •
+  <a href="#-security" style="color:#ffffff;text-decoration:none;">Security</a> •
+  <a href="#-license" style="color:#ffffff;text-decoration:none;">License</a>
 </p>
 
 <hr>
@@ -275,6 +277,10 @@ danetworkcode-main/
   <li>Docker runs the app as a non-root user, with capabilities dropped to the minimum needed for the sandboxed Chromium instance.</li>
   <li>Never commit a populated <code>.env</code> — <code>ADMIN_TOKEN</code>, OAuth client secrets, and <code>SESSION_SECRET</code> all belong in your deployment's secret store, not in version control.</li>
 </ul>
+
+<h2 id="-license">📄 License</h2>
+
+<p>This project is licensed under the <a href="LICENSE">MIT License</a> — see the <code>LICENSE</code> file for the full text.</p>
 
 <hr>
 
