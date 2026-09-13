@@ -6,11 +6,7 @@ services:
     container_name: backup-bot
     restart: unless-stopped
     ports:
-      # Bound to localhost only by default — the admin panel has no reason to
-      # be reachable directly from the internet. Put it behind a reverse
-      # proxy (nginx/Caddy) with TLS if you need remote access, or change
-      # this back to "3001:3001" if you understand the risk.
-      - "127.0.0.1:3001:3001"
+      - "3001:3001"
     env_file:
       - .env
     volumes:
@@ -21,3 +17,12 @@ services:
       - ./processed.json:/usr/src/app/processed.json
       # Ensure your watermark image is accessible
       - ./thenetwork.png:/usr/src/app/thenetwork.png
+      # Self-update system: keep update backups and status across container restarts.
+      # NOTE: these only survive `docker compose restart` / crash-restarts on the SAME
+      # container. Running `docker compose up --build` rebuilds the image from this
+      # source tree, which will undo any update applied only through the admin panel —
+      # copy admin.js/lib/update-manager.js changes back into your source tree if you
+      # want them to survive a rebuild.
+      - ./backups:/usr/src/app/backups
+      - ./update-state.json:/usr/src/app/update-state.json
+      - ./last-update-result.json:/usr/src/app/last-update-result.json

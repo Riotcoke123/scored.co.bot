@@ -8,13 +8,12 @@
     "prod": "pm2 start ecosystem.config.cjs"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "axios": "^1.15.0",
     "dotenv": "^17.4.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
-    "form-data": "^4.0.5"
-  },
-  "overrides": {
-    "qs": "^6.16.0"
+    "form-data": "^4.0.5",
+    "multer": "^2.3.0"
   }
 }
