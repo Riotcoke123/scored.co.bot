@@ -6,7 +6,11 @@ services:
     container_name: backup-bot
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      # Bound to localhost only by default — the admin panel has no reason to
+      # be reachable directly from the internet. Put it behind a reverse
+      # proxy (nginx/Caddy) with TLS if you need remote access, or change
+      # this back to "3001:3001" if you understand the risk.
+      - "127.0.0.1:3001:3001"
     env_file:
       - .env
     volumes:
